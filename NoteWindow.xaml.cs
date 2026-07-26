@@ -6,7 +6,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
 using System.Windows.Input;
-using System.Windows.Controls.Primitives;
 
 namespace SmartSticker;
 
@@ -70,7 +69,6 @@ public partial class NoteWindow : Window
     private void Strike_Click(object sender, RoutedEventArgs e) => Editor.Selection.ApplyPropertyValue(Inline.TextDecorationsProperty, Editor.Selection.GetPropertyValue(Inline.TextDecorationsProperty) == TextDecorations.Strikethrough ? null : TextDecorations.Strikethrough);
     private void Bullets_Click(object sender, RoutedEventArgs e) => EditingCommands.ToggleBullets.Execute(null, Editor);
     private void Editor_TextChanged(object sender, TextChangedEventArgs e) => Save();
-    private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e) { Width = Math.Max(MinWidth, Width + e.HorizontalChange); Height = Math.Max(MinHeight, Height + e.VerticalChange); }
     private void SetColor(string color) { _note.Color = color; Root.Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(color)!; }
     private void Save()
     {
