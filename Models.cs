@@ -16,4 +16,7 @@ public sealed class NoteModel
     public double FontSize { get; set; } = 16;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    public double ImageScale { get; set; } = 1;
+    public double ImageOffsetX { get; set; }
+    public double ImageOffsetY { get; set; }
 }
