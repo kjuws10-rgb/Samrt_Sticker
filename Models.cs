@@ -4,6 +4,7 @@ public sealed class NoteModel
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Text { get; set; } = "";
+    public string? RtfText { get; set; }
     public string Color { get; set; } = "#FFF6B7";
     public string? ImagePath { get; set; }
     public bool IsPinned { get; set; }
