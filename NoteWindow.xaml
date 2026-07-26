@@ -19,6 +19,7 @@
     <Button Click="Bullets_Click" Content="☷" FontSize="18" Padding="8,2" ToolTip="글머리 기호" Background="Transparent" BorderThickness="0"/>
     <Button Click="Capture_Click" Content="▧" FontSize="19" Padding="9,2" ToolTip="이 메모에 화면 캡처 첨부" Background="Transparent" BorderThickness="0"/>
    </StackPanel></Border>
+   <Button HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,8" Click="Opacity_Click" Content="◐" FontSize="17" Padding="7,2" ToolTip="메모 투명도" Background="Transparent" BorderThickness="0"/>
   </Grid>
  </Border><Window.Triggers><EventTrigger RoutedEvent="FrameworkElement.Loaded"><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></EventTrigger></Window.Triggers>
 </Window>
