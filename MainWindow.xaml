@@ -4,7 +4,7 @@
   <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown"><Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition/><ColumnDefinition Width="34"/><ColumnDefinition Width="34"/><ColumnDefinition Width="34"/></Grid.ColumnDefinitions>
    <Button Grid.Column="0" Click="NewNote_Click" Content="＋" FontSize="24" FontWeight="Light" Padding="0" Background="Transparent" BorderThickness="0" ToolTip="새 메모" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
    <TextBlock Grid.Column="1" Text="스티커 메모" FontWeight="SemiBold" FontSize="18" VerticalAlignment="Center" Foreground="#FF24262B"/>
-   <Button Grid.Column="2" Click="DeleteSelected_Click" Content="⌫" FontSize="16" Padding="0" Background="Transparent" BorderThickness="0" ToolTip="선택한 메모 일괄 삭제" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
+   <Button Grid.Column="2" Click="ToggleAllNotesVisibility_Click" Content="◉" FontSize="16" Padding="0" Background="Transparent" BorderThickness="0" ToolTip="모든 메모 숨기기 / 펼치기" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
    <Button Grid.Column="3" Click="Settings_Click" Content="⚙" FontSize="16" Padding="0" Background="Transparent" BorderThickness="0" ToolTip="설정" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
    <Button Grid.Column="4" Click="Hide_Click" Content="×" FontSize="22" FontWeight="Light" Padding="0" Background="Transparent" BorderThickness="0" ToolTip="트레이로 숨기기" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
   </Grid>
