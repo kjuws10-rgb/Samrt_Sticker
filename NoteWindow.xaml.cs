@@ -43,7 +43,8 @@ public partial class NoteWindow : Window
     private void More_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu();
-        var color = new MenuItem { Header = "메모 색상 변경" }; color.Click += (_, _) => { var index = Array.IndexOf(_colors, _note.Color); SetColor(_colors[(index + 1) % _colors.Length]); Save(); };
+        var color = new MenuItem { Header = "색상 선택" };
+        foreach (var shade in _colors) { var swatch = new MenuItem { Header = "     ", Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(shade)! }; swatch.Click += (_, _) => { SetColor(shade); Save(); }; color.Items.Add(swatch); }
         var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
