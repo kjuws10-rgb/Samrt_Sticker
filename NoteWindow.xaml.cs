@@ -26,6 +26,7 @@ public partial class NoteWindow : Window
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
     {
         InitializeComponent(); _store = store; _note = note; _settings = settings;
+        var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
         SetColor(note.Color); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
         ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
@@ -34,7 +35,8 @@ public partial class NoteWindow : Window
     private void LoadDocument()
     {
         var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd);
-        if (!string.IsNullOrWhiteSpace(_note.RtfText)) { using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_note.RtfText)); range.Load(stream, System.Windows.DataFormats.Rtf); }
+        if (!string.IsNullOrWhiteSpace(_note.XamlDocument)) { using var stream = new MemoryStream(Convert.FromBase64String(_note.XamlDocument)); range.Load(stream, System.Windows.DataFormats.XamlPackage); }
+        else if (!string.IsNullOrWhiteSpace(_note.RtfText)) { using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_note.RtfText)); range.Load(stream, System.Windows.DataFormats.Rtf); }
         else range.Text = _note.Text;
     }
     private void LoadImage()
@@ -72,6 +74,15 @@ public partial class NoteWindow : Window
     {
         if (System.Windows.MessageBox.Show("이 메모에서 첨부 이미지를 삭제할까요?", "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _note.ImagePath = null; Preview.Source = null; ImageCard.Visibility = Visibility.Collapsed; Save();
+    }
+    private void InsertImageIntoText()
+    {
+        if (string.IsNullOrWhiteSpace(_note.ImagePath) || !File.Exists(_note.ImagePath)) return;
+        var image = new System.Windows.Controls.Image { MaxWidth = 240, MaxHeight = 180, Stretch = Stretch.Uniform, Margin = new Thickness(4) };
+        var source = new BitmapImage(); source.BeginInit(); source.UriSource = new Uri(_note.ImagePath); source.CacheOption = BitmapCacheOption.OnLoad; source.EndInit(); image.Source = source;
+        var paragraph = Editor.CaretPosition.Paragraph ?? Editor.Document.Blocks.FirstBlock as Paragraph;
+        paragraph?.Inlines.Add(new InlineUIContainer(image));
+        ImageCard.Visibility = Visibility.Collapsed; Save(); Editor.Focus();
     }
     private void Editor_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
@@ -123,6 +134,6 @@ public partial class NoteWindow : Window
     {
         if (!_ready) return;
         var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd); using var stream = new MemoryStream(); range.Save(stream, System.Windows.DataFormats.Rtf);
-        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.UpdatedAt = DateTime.Now; _store.Save();
+        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); using var xamlStream = new MemoryStream(); range.Save(xamlStream, System.Windows.DataFormats.XamlPackage); _note.XamlDocument = Convert.ToBase64String(xamlStream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.UpdatedAt = DateTime.Now; _store.Save();
     }
 }
