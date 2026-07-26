@@ -23,8 +23,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
         NotesList.SelectionMode = System.Windows.Controls.SelectionMode.Extended;
-        var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); NotesList.ContextMenu = menu;
+        var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); menu.Opened += (_, _) => delete.Header = NotesList.SelectedItems.Count > 1 ? $"선택한 {NotesList.SelectedItems.Count}개 메모 삭제" : "선택한 메모 삭제"; NotesList.ContextMenu = menu;
         NotesList.PreviewMouseRightButtonDown += NotesList_PreviewMouseRightButtonDown;
+        NotesList.PreviewKeyDown += NotesList_PreviewKeyDown;
         NotesList.ItemContainerGenerator.StatusChanged += (_, _) => AttachHoverPreviews();
         ApplyTheme(_settings.Current.Theme);
         using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -91,6 +92,11 @@ public partial class MainWindow : Window
             _store.Remove(note);
         }
         NotesList.SelectedItems.Clear(); RefreshNotes();
+    }
+    private void NotesList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != System.Windows.Input.Key.Delete || NotesList.SelectedItems.Count == 0) return;
+        DeleteSelected_Click(sender, e); e.Handled = true;
     }
     private void Capture_Click(object sender, RoutedEventArgs e) => CaptureNewNote();
     public void CaptureNewNote()
