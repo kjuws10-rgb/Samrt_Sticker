@@ -18,7 +18,8 @@ public sealed class CaptureRegion(Rect screenRect, List<WpfPoint>? polygon)
 
 public sealed class CaptureSelector : Window
 {
-    private readonly Canvas _canvas = new();
+    // Transparent background is essential: a Canvas without a background is not hit-testable on empty areas.
+    private readonly Canvas _canvas = new() { Background = System.Windows.Media.Brushes.Transparent };
     private readonly bool _freeform;
     private readonly List<WpfPoint> _points = [];
     private readonly WpfRectangle _rectangle = new() { Stroke = System.Windows.Media.Brushes.White, Fill = new SolidColorBrush(System.Windows.Media.Color.FromArgb(80, 255, 255, 255)), StrokeThickness = 2, StrokeDashArray = [4, 2] };
