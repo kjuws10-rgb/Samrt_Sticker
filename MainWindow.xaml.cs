@@ -34,7 +34,8 @@ public partial class MainWindow : Window
     private void CreateNote(string? imagePath)
     {
         var note = new NoteModel { ImagePath = imagePath, Text = imagePath is null ? "새 메모" : "화면 캡처", IsPinned = _settings.Current.DefaultPinned };
-        _store.Add(note); new NoteWindow(_store, note).Show();
+        note.FontFamily = _settings.Current.DefaultFontFamily; note.FontSize = _settings.Current.DefaultFontSize;
+        _store.Add(note); new NoteWindow(_store, note, _settings).Show();
     }
     private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_settings) { Owner = this }.ShowDialog();
 }

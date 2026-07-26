@@ -5,6 +5,7 @@ using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
+using System.Windows.Input;
 
 namespace SmartSticker;
 
@@ -12,14 +13,16 @@ public partial class NoteWindow : Window
 {
     private readonly NoteStore _store;
     private readonly NoteModel _note;
+    private readonly SettingsStore? _settings;
     private readonly string[] _colors = ["#FFFFF6C9", "#FFDDF5D6", "#FFDCEEFF", "#FFFFDCE7", "#FFE9E0FF"];
     private bool _ready;
 
-    public NoteWindow(NoteStore store, NoteModel note)
+    public Guid NoteId => _note.Id;
+    public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
     {
-        InitializeComponent(); _store = store; _note = note;
+        InitializeComponent(); _store = store; _note = note; _settings = settings;
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
-        SetColor(note.Color); LoadDocument(); LoadImage(); _ready = true;
+        SetColor(note.Color); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage(); _ready = true;
         LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => Save();
     }
     private void LoadDocument()
@@ -34,7 +37,8 @@ public partial class NoteWindow : Window
         var image = new BitmapImage(); image.BeginInit(); image.UriSource = new Uri(_note.ImagePath); image.CacheOption = BitmapCacheOption.OnLoad; image.EndInit();
         Preview.Source = image; ImageCard.Visibility = Visibility.Visible;
     }
-    private void NewNote_Click(object sender, RoutedEventArgs e) { var note = new NoteModel { Text = "새 메모" }; _store.Add(note); new NoteWindow(_store, note).Show(); }
+    private void NewNote_Click(object sender, RoutedEventArgs e) { var note = new NoteModel { Text = "새 메모", FontFamily = _settings?.Current.DefaultFontFamily ?? "맑은 고딕", FontSize = _settings?.Current.DefaultFontSize ?? 16 }; _store.Add(note); new NoteWindow(_store, note, _settings).Show(); }
+    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is System.Windows.Controls.Button) return; try { DragMove(); } catch { } }
     private void More_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu();

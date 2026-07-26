@@ -12,4 +12,6 @@ public sealed class NoteModel
     public double Top { get; set; } = 160;
     public double Width { get; set; } = 330;
     public double Height { get; set; } = 360;
+    public string FontFamily { get; set; } = "맑은 고딕";
+    public double FontSize { get; set; } = 16;
 }
