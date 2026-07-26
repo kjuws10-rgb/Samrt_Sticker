@@ -15,7 +15,7 @@ public sealed class SettingsPage : Grid
     public SettingsPage(SettingsStore store, Action goBack)
     {
         Margin = new Thickness(12); RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); RowDefinitions.Add(new RowDefinition()); RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        var back = new Button { Content = "←", FontSize = 22, Background = Brushes.Transparent, BorderThickness = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Left }; back.Click += (_, _) => goBack();
+        var back = new Button { Content = "←", FontSize = 22, Width = 44, Height = 40, Padding = new Thickness(0), Background = Brushes.Transparent, BorderThickness = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Left, ToolTip = "메모 목록으로 돌아가기" }; back.Click += (_, _) => goBack();
         var title = new TextBlock { Text = "설정", FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(48, 8, 0, 8) }; var header = new Grid(); header.Children.Add(back); header.Children.Add(title); Children.Add(header);
         var s = store.Current; var panel = new StackPanel { Margin = new Thickness(2, 18, 2, 0) }; Grid.SetRow(panel, 1); Children.Add(panel);
         var auto = AddCheck(panel, "Windows 로그인 시 자동 실행", s.StartWithWindows); var restore = AddCheck(panel, "실행 시 이전 메모 복원", s.RestoreNotesOnLaunch); var pin = AddCheck(panel, "새 메모 항상 위에 표시", s.DefaultPinned); var copy = AddCheck(panel, "캡처 이미지를 클립보드에 복사", s.CopyCaptureToClipboard);

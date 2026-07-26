@@ -27,7 +27,8 @@ public partial class NoteWindow : Window
     {
         InitializeComponent(); _store = store; _note = note; _settings = settings;
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
-        SetColor(note.Color); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage(); _ready = true;
+        SetColor(note.Color); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
+        ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
         LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => Save();
     }
     private void LoadDocument()
@@ -87,20 +88,21 @@ public partial class NoteWindow : Window
     {
         if (Keyboard.Modifiers != ModifierKeys.Control) return;
         var next = Math.Clamp(ImageScale.ScaleX + (e.Delta > 0 ? .12 : -.12), .25, 4.0);
-        ImageScale.ScaleX = next; ImageScale.ScaleY = next; e.Handled = true;
+        ImageScale.ScaleX = next; ImageScale.ScaleY = next; SaveImageView(); e.Handled = true;
     }
     private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ClickCount == 2) { ImageScale.ScaleX = 1; ImageScale.ScaleY = 1; e.Handled = true; return; }
+        if (e.ClickCount == 2) { ImageScale.ScaleX = 1; ImageScale.ScaleY = 1; ImageTranslate.X = 0; ImageTranslate.Y = 0; SaveImageView(); e.Handled = true; return; }
         if (ImageScale.ScaleX <= 1) return;
-        _isPanning = true; _panStart = e.GetPosition(ImageScroll); _panHorizontal = ImageScroll.HorizontalOffset; _panVertical = ImageScroll.VerticalOffset; Preview.CaptureMouse(); Preview.Cursor = System.Windows.Input.Cursors.Hand; e.Handled = true;
+        _isPanning = true; _panStart = e.GetPosition(ImageScroll); _panHorizontal = ImageTranslate.X; _panVertical = ImageTranslate.Y; Preview.CaptureMouse(); Preview.Cursor = System.Windows.Input.Cursors.Hand; e.Handled = true;
     }
     private void Preview_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
         if (!_isPanning) return;
-        var current = e.GetPosition(ImageScroll); ImageScroll.ScrollToHorizontalOffset(_panHorizontal - (current.X - _panStart.X)); ImageScroll.ScrollToVerticalOffset(_panVertical - (current.Y - _panStart.Y));
+        var current = e.GetPosition(ImageScroll); ImageTranslate.X = _panHorizontal + (current.X - _panStart.X); ImageTranslate.Y = _panVertical + (current.Y - _panStart.Y);
     }
-    private void Preview_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) { if (!_isPanning) return; _isPanning = false; Preview.ReleaseMouseCapture(); Preview.Cursor = System.Windows.Input.Cursors.Arrow; }
+    private void Preview_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) { if (!_isPanning) return; _isPanning = false; Preview.ReleaseMouseCapture(); Preview.Cursor = System.Windows.Input.Cursors.Arrow; SaveImageView(); }
+    private void SaveImageView() { if (!_ready) return; _note.ImageScale = ImageScale.ScaleX; _note.ImageOffsetX = ImageTranslate.X; _note.ImageOffsetY = ImageTranslate.Y; Save(); }
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
         if (_isCapturing) return;
