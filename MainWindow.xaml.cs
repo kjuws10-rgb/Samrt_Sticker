@@ -8,6 +8,7 @@ using System.Windows.Shell;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media.Effects;
 using System.IO;
 
 namespace SmartSticker;
@@ -70,11 +71,22 @@ public partial class MainWindow : Window
     private void Search_TextChanged(object sender, TextChangedEventArgs e) => RefreshNotes();
     private void NotesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (NotesList.SelectedItem is not NoteListItem item) return;
-        if (Mouse.RightButton == MouseButtonState.Pressed || Keyboard.Modifiers != ModifierKeys.None) return;
+        if (NotesList.SelectedItem is not NoteListItem item) { UpdateSelectionAppearance(); return; }
+        if (Mouse.RightButton == MouseButtonState.Pressed || Keyboard.Modifiers != ModifierKeys.None) { UpdateSelectionAppearance(); return; }
         var open = System.Windows.Application.Current.Windows.OfType<NoteWindow>().FirstOrDefault(window => window.NoteId == item.Note.Id);
         if (open is null) new NoteWindow(_store, item.Note, _settings).Show(); else { open.Show(); open.Activate(); }
         NotesList.SelectedItem = null;
+        UpdateSelectionAppearance();
+    }
+    private void UpdateSelectionAppearance()
+    {
+        foreach (var item in _items)
+        {
+            if (NotesList.ItemContainerGenerator.ContainerFromItem(item) is not ListBoxItem container) continue;
+            var selected = container.IsSelected;
+            container.Opacity = selected ? .62 : 1;
+            container.Effect = selected ? new DropShadowEffect { Color = System.Windows.Media.Colors.DimGray, ShadowDepth = 0, BlurRadius = 11, Opacity = .72 } : null;
+        }
     }
     private void NotesList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
