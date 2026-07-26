@@ -17,6 +17,10 @@ public partial class NoteWindow : Window
     private readonly string[] _colors = ["#FFFFF6C9", "#FFDDF5D6", "#FFDCEEFF", "#FFFFDCE7", "#FFE9E0FF"];
     private bool _ready;
     private bool _isCapturing;
+    private bool _isPanning;
+    private System.Windows.Point _panStart;
+    private double _panHorizontal;
+    private double _panVertical;
 
     public Guid NoteId => _note.Id;
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
@@ -87,9 +91,16 @@ public partial class NoteWindow : Window
     }
     private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ClickCount != 2) return;
-        ImageScale.ScaleX = 1; ImageScale.ScaleY = 1; e.Handled = true;
+        if (e.ClickCount == 2) { ImageScale.ScaleX = 1; ImageScale.ScaleY = 1; e.Handled = true; return; }
+        if (ImageScale.ScaleX <= 1) return;
+        _isPanning = true; _panStart = e.GetPosition(ImageScroll); _panHorizontal = ImageScroll.HorizontalOffset; _panVertical = ImageScroll.VerticalOffset; Preview.CaptureMouse(); Preview.Cursor = System.Windows.Input.Cursors.Hand; e.Handled = true;
     }
+    private void Preview_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (!_isPanning) return;
+        var current = e.GetPosition(ImageScroll); ImageScroll.ScrollToHorizontalOffset(_panHorizontal - (current.X - _panStart.X)); ImageScroll.ScrollToVerticalOffset(_panVertical - (current.Y - _panStart.Y));
+    }
+    private void Preview_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) { if (!_isPanning) return; _isPanning = false; Preview.ReleaseMouseCapture(); Preview.Cursor = System.Windows.Input.Cursors.Arrow; }
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
         if (_isCapturing) return;

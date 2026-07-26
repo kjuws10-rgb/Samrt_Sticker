@@ -20,9 +20,11 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<NoteListItem> _items = [];
     private bool _allowClose;
     private bool _isCapturing;
+    private UIElement? _dashboardContent;
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
+        _dashboardContent = Root.Child;
         NotesList.SelectionMode = System.Windows.Controls.SelectionMode.Extended;
         var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); menu.Opened += (_, _) => delete.Header = NotesList.SelectedItems.Count > 1 ? $"선택한 {NotesList.SelectedItems.Count}개 메모 삭제" : "선택한 메모 삭제"; NotesList.ContextMenu = menu;
         NotesList.PreviewMouseRightButtonDown += NotesList_PreviewMouseRightButtonDown;
@@ -136,7 +138,7 @@ public partial class MainWindow : Window
         var note = new NoteModel { ImagePath = imagePath, Text = imagePath is null ? "새 메모" : "화면 캡처", IsPinned = _settings.Current.DefaultPinned, FontFamily = _settings.Current.DefaultFontFamily, FontSize = _settings.Current.DefaultFontSize };
         _store.Add(note); new NoteWindow(_store, note, _settings).Show();
     }
-    private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_settings) { Owner = this }.ShowDialog();
+    private void Settings_Click(object sender, RoutedEventArgs e) => Root.Child = new SettingsPage(_settings, () => Root.Child = _dashboardContent);
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is System.Windows.Controls.Button) return; try { DragMove(); } catch { } }
 }
 
