@@ -6,14 +6,14 @@ namespace SmartSticker;
 public sealed class TrayManager : IDisposable
 {
     private readonly Forms.NotifyIcon _icon;
-    public TrayManager(Action showDashboard, Action newNote, Action capture, Action showAllNotes, Action exit)
+    public TrayManager(Action showDashboard, Action newNote, Action capture, Action showAllNotes, Action hideAllNotes, Action exit)
     {
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Smart Sticker 열기", null, (_, _) => showDashboard());
         menu.Items.Add("새 메모", null, (_, _) => newNote());
         menu.Items.Add("화면 캡처", null, (_, _) => capture());
         menu.Items.Add("모든 메모 표시", null, (_, _) => showAllNotes());
-        menu.Items.Add("모든 메모 숨기기", null, (_, _) => { foreach (var window in System.Windows.Application.Current.Windows.OfType<NoteWindow>()) window.Hide(); });
+        menu.Items.Add("모든 메모 숨기기", null, (_, _) => hideAllNotes());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("종료", null, (_, _) => exit());
         _icon = new Forms.NotifyIcon { Icon = StickerIcon.Create(), Text = "Smart Sticker", Visible = true, ContextMenuStrip = menu };
