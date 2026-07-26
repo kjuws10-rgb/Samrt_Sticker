@@ -79,6 +79,17 @@ public partial class NoteWindow : Window
         using (var stream = File.Create(path)) encoder.Save(stream);
         _note.ImagePath = path; LoadImage(); Save(); e.Handled = true;
     }
+    private void Preview_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.Control) return;
+        var next = Math.Clamp(ImageScale.ScaleX + (e.Delta > 0 ? .12 : -.12), .25, 4.0);
+        ImageScale.ScaleX = next; ImageScale.ScaleY = next; e.Handled = true;
+    }
+    private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2) return;
+        ImageScale.ScaleX = 1; ImageScale.ScaleY = 1; e.Handled = true;
+    }
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
         if (_isCapturing) return;

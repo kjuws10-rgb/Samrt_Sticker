@@ -41,6 +41,9 @@ public sealed class CaptureSelector : Window
     {
         if (Mouse.Captured != _canvas) return; Mouse.Capture(null); var end = e.GetPosition(_canvas); var x = Math.Min(_start.X, end.X); var y = Math.Min(_start.Y, end.Y); var width = Math.Abs(end.X - _start.X); var height = Math.Abs(end.Y - _start.Y);
         if (width < 4 || height < 4) { Close(); return; }
-        Region = new CaptureRegion(new Rect(Left + x, Top + y, width, height), _freeform ? _points.Select(point => new WpfPoint(Left + point.X, Top + point.Y)).ToList() : null); DialogResult = true;
+        // PointToScreen returns device pixels, avoiding DPI scaling offsets on high-DPI and multi-monitor setups.
+        var topLeft = PointToScreen(new WpfPoint(x, y)); var bottomRight = PointToScreen(new WpfPoint(x + width, y + height));
+        var polygon = _freeform ? _points.Select(PointToScreen).ToList() : null;
+        Region = new CaptureRegion(new Rect(topLeft, bottomRight), polygon); DialogResult = true;
     }
 }
