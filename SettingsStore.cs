@@ -12,6 +12,9 @@ public sealed class AppSettings
     public bool RestoreNotesOnLaunch { get; set; } = true;
     public bool DefaultPinned { get; set; }
     public bool CopyCaptureToClipboard { get; set; } = true;
+    public string CaptureShortcut { get; set; } = "Shift + F5";
+    public string DefaultFontFamily { get; set; } = "맑은 고딕";
+    public double DefaultFontSize { get; set; } = 16;
 }
 
 public sealed class SettingsStore
@@ -20,6 +23,7 @@ public sealed class SettingsStore
     private const string AppName = "SmartSticker";
     private readonly string _file = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), AppName, "settings.json");
     public AppSettings Current { get; private set; } = new();
+    public event Action<AppSettings>? SettingsSaved;
 
     public void Load()
     {
@@ -31,7 +35,7 @@ public sealed class SettingsStore
     {
         Directory.CreateDirectory(Path.GetDirectoryName(_file)!);
         File.WriteAllText(_file, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
-        SetAutoStart(settings.StartWithWindows); Current = settings;
+        SetAutoStart(settings.StartWithWindows); Current = settings; SettingsSaved?.Invoke(Current);
     }
     private static bool IsAutoStartEnabled() => Registry.CurrentUser.OpenSubKey(RunKey)?.GetValue(AppName) is string;
     private static void SetAutoStart(bool enabled)
