@@ -45,7 +45,9 @@ public partial class MainWindow : Window
         foreach (var item in _items)
         {
             if (NotesList.ItemContainerGenerator.ContainerFromItem(item) is not ListBoxItem container || container.ToolTip is not null) continue;
-            container.ToolTip = CreateHoverPreview(item.Note);
+            var preview = CreateHoverPreview(item.Note);
+            container.ToolTip = preview;
+            container.MouseLeave += (_, _) => preview.IsOpen = false;
         }
     }
     private static System.Windows.Controls.ToolTip CreateHoverPreview(NoteModel note)
@@ -59,7 +61,7 @@ public partial class MainWindow : Window
         }
         stack.Children.Add(new System.Windows.Controls.TextBlock { Text = string.IsNullOrWhiteSpace(note.Text) ? "메모를 작성하세요..." : note.Text, TextWrapping = TextWrapping.Wrap, MaxHeight = 190, Foreground = System.Windows.Media.Brushes.Black, FontSize = note.FontSize });
         var border = new System.Windows.Controls.Border { Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(note.Color)!, Opacity = .93, CornerRadius = new CornerRadius(8), Child = stack, BorderBrush = System.Windows.Media.Brushes.White, BorderThickness = new Thickness(1) };
-        var tip = new System.Windows.Controls.ToolTip { Content = border, Opacity = 0, Placement = PlacementMode.Right, HorizontalOffset = 8, VerticalOffset = -8, StaysOpen = false };
+        var tip = new System.Windows.Controls.ToolTip { Content = border, Opacity = 0, Placement = PlacementMode.Right, HorizontalOffset = 8, VerticalOffset = -8, StaysOpen = true };
         tip.Opened += (_, _) => tip.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } });
         return tip;
     }
