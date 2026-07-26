@@ -68,7 +68,7 @@ public partial class NoteWindow : Window
         if (System.Windows.MessageBox.Show("이 메모에서 첨부 이미지를 삭제할까요?", "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _note.ImagePath = null; Preview.Source = null; ImageCard.Visibility = Visibility.Collapsed; Save();
     }
-    private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void Editor_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key != Key.V || Keyboard.Modifiers != ModifierKeys.Control || !System.Windows.Clipboard.ContainsImage()) return;
         var image = System.Windows.Clipboard.GetImage();
