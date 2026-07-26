@@ -3,6 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Interop;
+using System.Windows.Input;
+using System.Windows.Controls.Primitives;
+using System.Windows.Shell;
 
 namespace SmartSticker;
 
@@ -15,8 +18,10 @@ public partial class MainWindow : Window
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
+        ApplyTheme(_settings.Current.Theme);
         using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         Closing += (_, e) => { if (!_allowClose) { e.Cancel = true; Hide(); } };
+        var jumpList = new JumpList(); jumpList.JumpItems.Add(new JumpTask { Title = "새 메모", Description = "새 스티커 메모 만들기", ApplicationPath = Environment.ProcessPath, Arguments = "--new-note" }); jumpList.JumpItems.Add(new JumpTask { Title = "모든 메모 표시", Description = "저장된 메모 열기", ApplicationPath = Environment.ProcessPath, Arguments = "--show-all" }); JumpList.SetJumpList(System.Windows.Application.Current, jumpList);
     }
     public void RefreshNotes()
     {
@@ -49,12 +54,15 @@ public partial class MainWindow : Window
     public void CreateBlankNote() => CreateNote(null);
     public void ShowDashboard() { Show(); WindowState = WindowState.Normal; Activate(); RefreshNotes(); }
     public void PrepareForExit() => _allowClose = true;
+    public void ApplyTheme(string theme) { Root.Background = theme.Equals("Dark", StringComparison.OrdinalIgnoreCase) ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 40, 45)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(252, 252, 252)); }
     private void CreateNote(string? imagePath)
     {
         var note = new NoteModel { ImagePath = imagePath, Text = imagePath is null ? "새 메모" : "화면 캡처", IsPinned = _settings.Current.DefaultPinned, FontFamily = _settings.Current.DefaultFontFamily, FontSize = _settings.Current.DefaultFontSize };
         _store.Add(note); new NoteWindow(_store, note, _settings).Show();
     }
     private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_settings) { Owner = this }.ShowDialog();
+    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is System.Windows.Controls.Button) return; try { DragMove(); } catch { } }
+    private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e) { Width = Math.Max(MinWidth, Width + e.HorizontalChange); Height = Math.Max(MinHeight, Height + e.VerticalChange); }
 }
 
 public sealed class NoteListItem

@@ -16,6 +16,7 @@ public sealed class AppSettings
     public string DefaultFontFamily { get; set; } = "맑은 고딕";
     public double DefaultFontSize { get; set; } = 16;
     public CaptureMode CaptureMode { get; set; } = CaptureMode.FullScreen;
+    public string Theme { get; set; } = "Light";
 }
 
 public enum CaptureMode { FullScreen, Rectangle, Freeform, Scroll }
