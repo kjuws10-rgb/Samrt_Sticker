@@ -9,6 +9,7 @@ public sealed class NoteStore
     private string NotesFile => Path.Combine(_root, "notes.json");
     public string ImageDirectory => Path.Combine(_root, "captures");
     public List<NoteModel> Notes { get; private set; } = [];
+    public event Action? Changed;
 
     public List<NoteModel> Load()
     {
@@ -22,5 +23,6 @@ public sealed class NoteStore
     {
         Directory.CreateDirectory(_root);
         File.WriteAllText(NotesFile, JsonSerializer.Serialize(Notes, new JsonSerializerOptions { WriteIndented = true }));
+        Changed?.Invoke();
     }
 }

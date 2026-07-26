@@ -73,6 +73,6 @@ public partial class NoteWindow : Window
     {
         if (!_ready) return;
         var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd); using var stream = new MemoryStream(); range.Save(stream, System.Windows.DataFormats.Rtf);
-        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _store.Save();
+        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.UpdatedAt = DateTime.Now; _store.Save();
     }
 }
