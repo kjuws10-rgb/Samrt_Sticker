@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Interop;
 using System.Windows.Input;
-using System.Windows.Controls.Primitives;
 using System.Windows.Shell;
 
 namespace SmartSticker;
@@ -62,7 +61,6 @@ public partial class MainWindow : Window
     }
     private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_settings) { Owner = this }.ShowDialog();
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is System.Windows.Controls.Button) return; try { DragMove(); } catch { } }
-    private void ResizeGrip_DragDelta(object sender, DragDeltaEventArgs e) { Width = Math.Max(MinWidth, Width + e.HorizontalChange); Height = Math.Max(MinHeight, Height + e.VerticalChange); }
 }
 
 public sealed class NoteListItem

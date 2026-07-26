@@ -1,6 +1,6 @@
 <Window x:Class="SmartSticker.NoteWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" Title="Smart Sticker 메모" Width="360" Height="440" MinWidth="260" MinHeight="240" WindowStartupLocation="Manual" Background="Transparent" AllowsTransparency="False" WindowStyle="None" ResizeMode="CanResize">
  <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="42" ResizeBorderThickness="7" CornerRadius="10" GlassFrameThickness="0"/></shell:WindowChrome.WindowChrome>
- <Border x:Name="Root" Background="#FFFFF6C9" CornerRadius="10" BorderBrush="#18000000" BorderThickness="1" SnapsToDevicePixels="True">
+ <Border x:Name="Root" Background="#FFFFF6C9" CornerRadius="10" BorderBrush="Transparent" BorderThickness="1" SnapsToDevicePixels="True">
   <Grid><Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="*"/><RowDefinition Height="44"/></Grid.RowDefinitions>
    <Grid Grid.Row="0" Background="#26FFFFFF" MouseLeftButtonDown="Header_MouseLeftButtonDown"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <Button Grid.Column="0" HorizontalAlignment="Left" Click="NewNote_Click" Content="＋" FontSize="25" FontWeight="Light" Padding="12,0" ToolTip="새 메모" Background="Transparent" BorderThickness="0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
