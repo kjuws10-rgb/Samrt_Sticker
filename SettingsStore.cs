@@ -15,7 +15,10 @@ public sealed class AppSettings
     public string CaptureShortcut { get; set; } = "Shift + F5";
     public string DefaultFontFamily { get; set; } = "맑은 고딕";
     public double DefaultFontSize { get; set; } = 16;
+    public CaptureMode CaptureMode { get; set; } = CaptureMode.FullScreen;
 }
+
+public enum CaptureMode { FullScreen, Rectangle, Freeform, Scroll }
 
 public sealed class SettingsStore
 {

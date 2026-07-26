@@ -18,6 +18,7 @@
     <Button Click="Bullets_Click" Content="☷" FontSize="18" Padding="8,2" ToolTip="글머리 기호" Background="Transparent" BorderThickness="0"/>
     <Button Click="Capture_Click" Content="▧" FontSize="19" Padding="9,2" ToolTip="이 메모에 화면 캡처 첨부" Background="Transparent" BorderThickness="0"/>
    </StackPanel></Border>
+   <Thumb HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="19" Height="19" DragDelta="ResizeGrip_DragDelta" Cursor="SizeNWSE" Background="#18000000" ToolTip="크기 조절"/>
   </Grid>
  </Border>
 </Window>
