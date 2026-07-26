@@ -14,4 +14,6 @@ public sealed class NoteModel
     public double Height { get; set; } = 360;
     public string FontFamily { get; set; } = "맑은 고딕";
     public double FontSize { get; set; } = 16;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime UpdatedAt { get; set; } = DateTime.Now;
 }
