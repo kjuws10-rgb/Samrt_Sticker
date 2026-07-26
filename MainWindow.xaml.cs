@@ -14,6 +14,7 @@ public partial class MainWindow : Window
     private readonly SettingsStore _settings;
     private readonly ObservableCollection<NoteListItem> _items = [];
     private bool _allowClose;
+    private bool _isCapturing;
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
@@ -42,13 +43,17 @@ public partial class MainWindow : Window
     private void Capture_Click(object sender, RoutedEventArgs e) => CaptureNewNote();
     public void CaptureNewNote()
     {
+        if (_isCapturing) return;
+        _isCapturing = true;
         try
         {
             Hide(); System.Threading.Thread.Sleep(180); var path = CaptureService.Capture(_store, _settings.Current.CaptureMode);
             if (_settings.Current.CopyCaptureToClipboard) { var image = new BitmapImage(); image.BeginInit(); image.UriSource = new Uri(path); image.CacheOption = BitmapCacheOption.OnLoad; image.EndInit(); System.Windows.Clipboard.SetImage(image); }
             ShowDashboard(); CreateNote(path);
         }
+        catch (OperationCanceledException) { ShowDashboard(); }
         catch (Exception ex) { ShowDashboard(); System.Windows.MessageBox.Show($"화면 캡처에 실패했습니다.\n{ex.Message}", "Smart Sticker"); }
+        finally { _isCapturing = false; }
     }
     public void CreateBlankNote() => CreateNote(null);
     public void ShowDashboard() { Show(); WindowState = WindowState.Normal; Activate(); RefreshNotes(); }
