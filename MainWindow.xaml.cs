@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows;
 using System.IO;
+using System.Windows.Media.Imaging;
 using Forms = System.Windows.Forms;
 
 namespace SmartSticker;
@@ -9,7 +10,8 @@ namespace SmartSticker;
 public partial class MainWindow : Window
 {
     private readonly NoteStore _store;
-    public MainWindow(NoteStore store) { InitializeComponent(); _store = store; }
+    private readonly SettingsStore _settings;
+    public MainWindow(NoteStore store, SettingsStore settings) { InitializeComponent(); _store = store; _settings = settings; }
     private void NewNote_Click(object sender, RoutedEventArgs e) => CreateNote(null);
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
@@ -23,6 +25,11 @@ public partial class MainWindow : Window
             Directory.CreateDirectory(_store.ImageDirectory);
             var path = Path.Combine(_store.ImageDirectory, $"capture-{DateTime.Now:yyyyMMdd-HHmmss}.png");
             bitmap.Save(path, ImageFormat.Png);
+            if (_settings.Current.CopyCaptureToClipboard)
+            {
+                var image = new BitmapImage(); image.BeginInit(); image.UriSource = new Uri(path); image.CacheOption = BitmapCacheOption.OnLoad; image.EndInit();
+                System.Windows.Clipboard.SetImage(image);
+            }
             Show(); Activate();
             CreateNote(path);
         }
@@ -30,7 +37,8 @@ public partial class MainWindow : Window
     }
     private void CreateNote(string? imagePath)
     {
-        var note = new NoteModel { ImagePath = imagePath, Text = imagePath is null ? "새 메모" : "화면 캡처" };
+        var note = new NoteModel { ImagePath = imagePath, Text = imagePath is null ? "새 메모" : "화면 캡처", IsPinned = _settings.Current.DefaultPinned };
         _store.Add(note); new NoteWindow(_store, note).Show();
     }
+    private void Settings_Click(object sender, RoutedEventArgs e) => new SettingsWindow(_settings) { Owner = this }.ShowDialog();
 }
