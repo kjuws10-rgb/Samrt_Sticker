@@ -5,6 +5,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Interop;
 using System.Windows.Input;
 using System.Windows.Shell;
+using System.Windows.Media;
 
 namespace SmartSticker;
 
@@ -18,6 +19,9 @@ public partial class MainWindow : Window
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
+        NotesList.SelectionMode = System.Windows.Controls.SelectionMode.Extended;
+        var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); NotesList.ContextMenu = menu;
+        NotesList.PreviewMouseRightButtonDown += NotesList_PreviewMouseRightButtonDown;
         ApplyTheme(_settings.Current.Theme);
         using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         Closing += (_, e) => { if (!_allowClose) { e.Cancel = true; Hide(); } };
@@ -36,9 +40,29 @@ public partial class MainWindow : Window
     private void NotesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (NotesList.SelectedItem is not NoteListItem item) return;
+        if (Mouse.RightButton == MouseButtonState.Pressed || Keyboard.Modifiers != ModifierKeys.None) return;
         var open = System.Windows.Application.Current.Windows.OfType<NoteWindow>().FirstOrDefault(window => window.NoteId == item.Note.Id);
         if (open is null) new NoteWindow(_store, item.Note, _settings).Show(); else { open.Show(); open.Activate(); }
         NotesList.SelectedItem = null;
+    }
+    private void NotesList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var source = e.OriginalSource as DependencyObject;
+        while (source is not null && source is not ListBoxItem) source = VisualTreeHelper.GetParent(source);
+        if (source is ListBoxItem item && !item.IsSelected) { NotesList.SelectedItems.Clear(); item.IsSelected = true; }
+    }
+    private void DeleteSelected_Click(object? sender, RoutedEventArgs e)
+    {
+        var selected = NotesList.SelectedItems.Cast<NoteListItem>().Select(item => item.Note).ToList();
+        if (selected.Count == 0) return;
+        var text = selected.Count == 1 ? "선택한 메모를 삭제할까요?" : $"선택한 {selected.Count}개의 메모를 삭제할까요?";
+        if (System.Windows.MessageBox.Show(text, "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        foreach (var note in selected)
+        {
+            System.Windows.Application.Current.Windows.OfType<NoteWindow>().FirstOrDefault(window => window.NoteId == note.Id)?.Close();
+            _store.Remove(note);
+        }
+        NotesList.SelectedItems.Clear(); RefreshNotes();
     }
     private void Capture_Click(object sender, RoutedEventArgs e) => CaptureNewNote();
     public void CaptureNewNote()
