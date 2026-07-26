@@ -6,6 +6,9 @@ using System.Windows.Interop;
 using System.Windows.Input;
 using System.Windows.Shell;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Controls.Primitives;
+using System.IO;
 
 namespace SmartSticker;
 
@@ -22,6 +25,7 @@ public partial class MainWindow : Window
         NotesList.SelectionMode = System.Windows.Controls.SelectionMode.Extended;
         var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); NotesList.ContextMenu = menu;
         NotesList.PreviewMouseRightButtonDown += NotesList_PreviewMouseRightButtonDown;
+        NotesList.ItemContainerGenerator.StatusChanged += (_, _) => AttachHoverPreviews();
         ApplyTheme(_settings.Current.Theme);
         using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         Closing += (_, e) => { if (!_allowClose) { e.Cancel = true; Hide(); } };
@@ -33,6 +37,30 @@ public partial class MainWindow : Window
         var query = SearchBox?.Text?.Trim() ?? "";
         var notes = _store.Notes.OrderByDescending(note => note.UpdatedAt).Where(note => string.IsNullOrWhiteSpace(query) || note.Text.Contains(query, StringComparison.OrdinalIgnoreCase));
         _items.Clear(); foreach (var note in notes) _items.Add(new NoteListItem(note));
+    }
+    private void AttachHoverPreviews()
+    {
+        if (NotesList.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated) return;
+        foreach (var item in _items)
+        {
+            if (NotesList.ItemContainerGenerator.ContainerFromItem(item) is not ListBoxItem container || container.ToolTip is not null) continue;
+            container.ToolTip = CreateHoverPreview(item.Note);
+        }
+    }
+    private static System.Windows.Controls.ToolTip CreateHoverPreview(NoteModel note)
+    {
+        var stack = new System.Windows.Controls.StackPanel { Width = 285, Margin = new Thickness(14, 12, 14, 12) };
+        stack.Children.Add(new System.Windows.Controls.TextBlock { Text = "메모 미리보기", FontWeight = FontWeights.SemiBold, FontSize = 12, Foreground = System.Windows.Media.Brushes.DimGray, Margin = new Thickness(0, 0, 0, 7) });
+        if (!string.IsNullOrWhiteSpace(note.ImagePath) && File.Exists(note.ImagePath))
+        {
+            var image = new System.Windows.Controls.Image { MaxHeight = 150, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 8) };
+            var source = new BitmapImage(); source.BeginInit(); source.UriSource = new Uri(note.ImagePath); source.CacheOption = BitmapCacheOption.OnLoad; source.EndInit(); image.Source = source; stack.Children.Add(image);
+        }
+        stack.Children.Add(new System.Windows.Controls.TextBlock { Text = string.IsNullOrWhiteSpace(note.Text) ? "메모를 작성하세요..." : note.Text, TextWrapping = TextWrapping.Wrap, MaxHeight = 190, Foreground = System.Windows.Media.Brushes.Black, FontSize = note.FontSize });
+        var border = new System.Windows.Controls.Border { Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(note.Color)!, Opacity = .93, CornerRadius = new CornerRadius(8), Child = stack, BorderBrush = System.Windows.Media.Brushes.White, BorderThickness = new Thickness(1) };
+        var tip = new System.Windows.Controls.ToolTip { Content = border, Opacity = 0, Placement = PlacementMode.Right, HorizontalOffset = 8, VerticalOffset = -8, StaysOpen = false };
+        tip.Opened += (_, _) => tip.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } });
+        return tip;
     }
     private void NewNote_Click(object sender, RoutedEventArgs e) => CreateBlankNote();
     private void Hide_Click(object sender, RoutedEventArgs e) => Hide();
