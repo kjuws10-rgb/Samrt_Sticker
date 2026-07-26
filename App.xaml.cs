@@ -24,7 +24,7 @@ public partial class App : System.Windows.Application
         _hotkey = new HotkeyManager(); _hotkey.Pressed += dashboard.CaptureNewNote; _hotkey.Register(_settings.Current.CaptureShortcut);
         _settings.SettingsSaved += settings => _hotkey.Register(settings.CaptureShortcut);
         _settings.SettingsSaved += settings => dashboard.ApplyTheme(settings.Theme);
-        _tray = new TrayManager(dashboard.ShowDashboard, dashboard.CreateBlankNote, dashboard.CaptureNewNote, () => ShowAllNotes(dashboard), () => ExitApplication(dashboard));
+        _tray = new TrayManager(dashboard.ShowDashboard, dashboard.CreateBlankNote, dashboard.CaptureNewNote, () => ShowAllNotes(dashboard), () => HideAllNotes(dashboard), () => ExitApplication(dashboard));
         if (_settings.Current.RestoreNotesOnLaunch)
             foreach (var note in _store.Notes) new NoteWindow(_store, note, _settings).Show();
         if (e.Args.Contains("--new-note")) dashboard.CreateBlankNote();
@@ -41,5 +41,10 @@ public partial class App : System.Windows.Application
             if (existing is null) new NoteWindow(_store, note, _settings).Show(); else { existing.Show(); existing.Activate(); }
         }
         dashboard.ShowDashboard();
+    }
+    private static void HideAllNotes(MainWindow dashboard)
+    {
+        foreach (var note in Current.Windows.OfType<NoteWindow>().ToList()) note.Hide();
+        dashboard.Hide();
     }
 }
