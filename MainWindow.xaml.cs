@@ -67,6 +67,7 @@ public sealed class NoteListItem
 {
     public NoteListItem(NoteModel note) { Note = note; }
     public NoteModel Note { get; }
+    public string Color => Note.Color;
     public string Preview => string.IsNullOrWhiteSpace(Note.Text) ? "메모를 작성하세요..." : Note.Text.Trim();
     public string TimeLabel => Note.UpdatedAt.Date == DateTime.Today ? Note.UpdatedAt.ToString("오전 h:mm").Replace("오전 0", "오전 12") : Note.UpdatedAt.ToString("M월 d일");
 }
