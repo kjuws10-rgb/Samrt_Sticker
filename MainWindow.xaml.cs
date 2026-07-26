@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Windows.Interop;
 
 namespace SmartSticker;
 
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
+        using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         Closing += (_, e) => { if (!_allowClose) { e.Cancel = true; Hide(); } };
     }
     public void RefreshNotes()
@@ -38,7 +40,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            Hide(); System.Threading.Thread.Sleep(180); var path = CaptureService.Capture(_store);
+            Hide(); System.Threading.Thread.Sleep(180); var path = CaptureService.Capture(_store, _settings.Current.CaptureMode);
             if (_settings.Current.CopyCaptureToClipboard) { var image = new BitmapImage(); image.BeginInit(); image.UriSource = new Uri(path); image.CacheOption = BitmapCacheOption.OnLoad; image.EndInit(); System.Windows.Clipboard.SetImage(image); }
             ShowDashboard(); CreateNote(path);
         }
