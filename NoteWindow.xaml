@@ -1,0 +1,11 @@
+<Window x:Class="SmartSticker.NoteWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="메모" Width="330" Height="360" MinWidth="240" MinHeight="210" WindowStartupLocation="Manual">
+ <Border x:Name="Root" CornerRadius="8" Padding="10"><DockPanel>
+  <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right">
+   <Button Click="Color_Click" Content="색상" ToolTip="메모 색상 변경"/><Button x:Name="PinButton" Click="Pin_Click" Content="📌 고정" ToolTip="항상 위에 표시"/><Button Click="Delete_Click" Content="삭제" Foreground="#FFC42B2B"/>
+  </StackPanel>
+  <StackPanel>
+   <Image x:Name="Preview" MaxHeight="170" Stretch="Uniform" Margin="0,3,0,8" Visibility="Collapsed"/>
+   <TextBox x:Name="Editor" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" BorderThickness="0" Background="Transparent" FontSize="16" MinHeight="100" TextChanged="Editor_TextChanged"/>
+  </StackPanel>
+ </DockPanel></Border>
+</Window>
