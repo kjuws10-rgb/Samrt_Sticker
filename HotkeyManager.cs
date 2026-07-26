@@ -25,11 +25,14 @@ public sealed class HotkeyManager : IDisposable
         if (parts.Length < 2) return false;
         foreach (var part in parts[..^1])
         {
-            if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase) || part.Equals("Control", StringComparison.OrdinalIgnoreCase)) modifiers |= 2;
-            else if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase)) modifiers |= 1;
-            else if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase)) modifiers |= 4;
-            else if (part.Equals("Win", StringComparison.OrdinalIgnoreCase) || part.Equals("Windows", StringComparison.OrdinalIgnoreCase)) modifiers |= 8;
+            uint flag;
+            if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase) || part.Equals("Control", StringComparison.OrdinalIgnoreCase)) flag = 2;
+            else if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase)) flag = 1;
+            else if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase)) flag = 4;
+            else if (part.Equals("Win", StringComparison.OrdinalIgnoreCase) || part.Equals("Windows", StringComparison.OrdinalIgnoreCase)) flag = 8;
             else return false;
+            if ((modifiers & flag) != 0) return false;
+            modifiers |= flag;
         }
         return modifiers != 0 && Enum.TryParse(parts[^1], true, out key) && key != Key.None && KeyInterop.VirtualKeyFromKey(key) != 0;
     }

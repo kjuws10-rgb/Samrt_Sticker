@@ -16,6 +16,7 @@ public partial class NoteWindow : Window
     private readonly SettingsStore? _settings;
     private readonly string[] _colors = ["#FFFFF6C9", "#FFDDF5D6", "#FFDCEEFF", "#FFFFDCE7", "#FFE9E0FF"];
     private bool _ready;
+    private bool _isCapturing;
 
     public Guid NoteId => _note.Id;
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
@@ -60,8 +61,12 @@ public partial class NoteWindow : Window
     }
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
+        if (_isCapturing) return;
+        _isCapturing = true;
         try { Hide(); System.Threading.Thread.Sleep(180); _note.ImagePath = CaptureService.Capture(_store, _settings?.Current.CaptureMode ?? CaptureMode.FullScreen); Show(); Activate(); LoadImage(); Save(); }
+        catch (OperationCanceledException) { Show(); }
         catch (Exception ex) { Show(); System.Windows.MessageBox.Show($"캡처에 실패했습니다.\n{ex.Message}", "Smart Sticker"); }
+        finally { _isCapturing = false; }
     }
     private void Bold_Click(object sender, RoutedEventArgs e) => Editor.Selection.ApplyPropertyValue(TextElement.FontWeightProperty, Editor.Selection.GetPropertyValue(TextElement.FontWeightProperty).Equals(FontWeights.Bold) ? FontWeights.Normal : FontWeights.Bold);
     private void Italic_Click(object sender, RoutedEventArgs e) => Editor.Selection.ApplyPropertyValue(TextElement.FontStyleProperty, Editor.Selection.GetPropertyValue(TextElement.FontStyleProperty).Equals(FontStyles.Italic) ? FontStyles.Normal : FontStyles.Italic);
