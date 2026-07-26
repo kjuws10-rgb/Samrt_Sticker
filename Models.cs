@@ -20,4 +20,5 @@ public sealed class NoteModel
     public double ImageScale { get; set; } = 1;
     public double ImageOffsetX { get; set; }
     public double ImageOffsetY { get; set; }
+    public double NoteOpacity { get; set; } = 1;
 }

@@ -14,7 +14,7 @@ public partial class NoteWindow : Window
     private readonly NoteStore _store;
     private readonly NoteModel _note;
     private readonly SettingsStore? _settings;
-    private readonly string[] _colors = ["#FFFFF6C9", "#FFDDF5D6", "#FFDCEEFF", "#FFFFDCE7", "#FFE9E0FF"];
+    private readonly string[] _colors = ["#FFFFF6C9", "#FFFFD7A8", "#FFFFC9D6", "#FFE9D6FF", "#FFD8E8FF", "#FFCDEFE5", "#FFD9F0C2", "#FFE4E7EB", "#FFD1D5DB", "#FFC8C8C8"];
     private bool _ready;
     private bool _isCapturing;
     private bool _isPanning;
@@ -28,7 +28,7 @@ public partial class NoteWindow : Window
         InitializeComponent(); _store = store; _note = note; _settings = settings;
         var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
-        SetColor(note.Color); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
+        SetColor(note.Color); Root.Opacity = note.NoteOpacity; Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
         ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
         LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => Save();
     }
@@ -55,6 +55,15 @@ public partial class NoteWindow : Window
         var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    private void Opacity_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu(); var panel = new StackPanel { Margin = new Thickness(10), Width = 160 };
+        panel.Children.Add(new TextBlock { Text = "메모 투명도", FontWeight = FontWeights.SemiBold });
+        var label = new TextBlock { Text = $"{Root.Opacity:P0}", Margin = new Thickness(0, 5, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
+        var slider = new Slider { Minimum = .3, Maximum = 1, Value = Root.Opacity };
+        slider.ValueChanged += (_, _) => { Root.Opacity = slider.Value; label.Text = $"{slider.Value:P0}"; _note.NoteOpacity = slider.Value; Save(); };
+        panel.Children.Add(slider); panel.Children.Add(label); menu.Items.Add(new MenuItem { Header = panel, StaysOpenOnClick = true }); menu.IsOpen = true;
+    }
     private void DeleteNote()
     {
         if (System.Windows.MessageBox.Show("이 메모를 영구 삭제할까요?", "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
@@ -134,6 +143,6 @@ public partial class NoteWindow : Window
     {
         if (!_ready) return;
         var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd); using var stream = new MemoryStream(); range.Save(stream, System.Windows.DataFormats.Rtf);
-        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); using var xamlStream = new MemoryStream(); range.Save(xamlStream, System.Windows.DataFormats.XamlPackage); _note.XamlDocument = Convert.ToBase64String(xamlStream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.UpdatedAt = DateTime.Now; _store.Save();
+        _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); using var xamlStream = new MemoryStream(); range.Save(xamlStream, System.Windows.DataFormats.XamlPackage); _note.XamlDocument = Convert.ToBase64String(xamlStream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.NoteOpacity = Root.Opacity; _note.UpdatedAt = DateTime.Now; _store.Save();
     }
 }
