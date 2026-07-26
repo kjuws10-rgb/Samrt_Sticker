@@ -59,6 +59,26 @@ public partial class NoteWindow : Window
         var dialog = new Microsoft.Win32.SaveFileDialog { Title = "캡처 이미지 저장", FileName = Path.GetFileName(_note.ImagePath), Filter = "PNG 이미지|*.png|모든 파일|*.*" };
         if (dialog.ShowDialog() == true) File.Copy(_note.ImagePath, dialog.FileName, true);
     }
+    private void CopyImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (Preview.Source is BitmapSource image) System.Windows.Clipboard.SetImage(image);
+    }
+    private void DeleteImage_Click(object sender, RoutedEventArgs e)
+    {
+        if (System.Windows.MessageBox.Show("이 메모에서 첨부 이미지를 삭제할까요?", "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        _note.ImagePath = null; Preview.Source = null; ImageCard.Visibility = Visibility.Collapsed; Save();
+    }
+    private void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.V || Keyboard.Modifiers != ModifierKeys.Control || !System.Windows.Clipboard.ContainsImage()) return;
+        var image = System.Windows.Clipboard.GetImage();
+        if (image is null) return;
+        Directory.CreateDirectory(_store.ImageDirectory);
+        var path = Path.Combine(_store.ImageDirectory, $"pasted-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
+        using (var stream = File.Create(path)) encoder.Save(stream);
+        _note.ImagePath = path; LoadImage(); Save(); e.Handled = true;
+    }
     private void Capture_Click(object sender, RoutedEventArgs e)
     {
         if (_isCapturing) return;
