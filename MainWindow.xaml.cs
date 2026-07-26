@@ -24,8 +24,6 @@ public partial class MainWindow : Window
     public MainWindow(NoteStore store, SettingsStore settings)
     {
         InitializeComponent(); _store = store; _settings = settings; NotesList.ItemsSource = _items;
-        var bulkButton = FindVisualChildren<System.Windows.Controls.Button>(this).FirstOrDefault(button => Grid.GetColumn(button) == 2);
-        if (bulkButton is not null) { bulkButton.Click -= DeleteSelected_Click; bulkButton.Click += ToggleAllNotesVisibility_Click; bulkButton.Content = "◉"; bulkButton.ToolTip = "모든 메모 숨기기 / 펼치기"; }
         _dashboardContent = Root.Child;
         NotesList.SelectionMode = System.Windows.Controls.SelectionMode.Extended;
         var menu = new ContextMenu(); var delete = new MenuItem { Header = "선택한 메모 삭제" }; delete.Click += DeleteSelected_Click; menu.Items.Add(delete); menu.Opened += (_, _) => delete.Header = NotesList.SelectedItems.Count > 1 ? $"선택한 {NotesList.SelectedItems.Count}개 메모 삭제" : "선택한 메모 삭제"; NotesList.ContextMenu = menu;
@@ -120,11 +118,6 @@ public partial class MainWindow : Window
             var open = notes.FirstOrDefault(window => window.NoteId == note.Id);
             if (open is null) new NoteWindow(_store, note, _settings).Show(); else { open.Show(); open.Activate(); }
         }
-    }
-    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
-    {
-        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
-        { var child = VisualTreeHelper.GetChild(parent, index); if (child is T match) yield return match; foreach (var nested in FindVisualChildren<T>(child)) yield return nested; }
     }
     private void NotesList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
