@@ -22,18 +22,19 @@ public partial class NoteWindow : Window
     private System.Windows.Point _panStart;
     private double _panHorizontal;
     private double _panVertical;
-    private readonly DispatcherTimer _reminderTimer = new() { Interval = TimeSpan.FromSeconds(15) };
+    private readonly DispatcherTimer _reminderTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private bool _alarmOpen;
 
     public Guid NoteId => _note.Id;
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
     {
         InitializeComponent(); _store = store; _note = note; _settings = settings;
-        _reminderTimer.Tick += (_, _) => CheckReminder(); _reminderTimer.Start();
+        _reminderTimer.Tick += (_, _) => { UpdateReminderCountdown(); CheckReminder(); }; _reminderTimer.Start(); UpdateReminderCountdown();
         var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
         SetColor(note.Color); Opacity = 1 - (note.Transparency / 100); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
         ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
-        LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => Save();
+        LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => { _reminderTimer.Stop(); Save(); };
     }
     private void LoadDocument()
     {
@@ -57,8 +58,7 @@ public partial class NoteWindow : Window
         foreach (var shade in _colors) { var swatch = new MenuItem { Header = "     ", Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(shade)! }; swatch.Click += (_, _) => { SetColor(shade); Save(); }; color.Items.Add(swatch); }
         var font = new MenuItem { Header = "글꼴" };
         foreach (var name in new[] { "맑은 고딕", "Segoe UI", "Arial", "나눔고딕", "Consolas" }) { var item = new MenuItem { Header = name, FontFamily = new System.Windows.Media.FontFamily(name) }; item.Click += (_, _) => { _note.FontFamily = name; Editor.FontFamily = new System.Windows.Media.FontFamily(name); Save(); }; font.Items.Add(item); }
-        var reminder = new MenuItem { Header = "이벤트 알림: 1시간 후" }; reminder.Click += (_, _) => { _note.ReminderAt = DateTime.Now.AddHours(1); _note.ReminderMinutesBefore = 0; _note.ReminderNotified = false; Save(); };
-        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(font); menu.Items.Add(reminder); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
+        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(font); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
     private void Opacity_Click(object sender, RoutedEventArgs e)
@@ -69,6 +69,14 @@ public partial class NoteWindow : Window
         var slider = new Slider { Minimum = 0, Maximum = 95, Value = _note.Transparency };
         slider.ValueChanged += (_, _) => { Opacity = 1 - (slider.Value / 100); label.Text = $"{slider.Value:0}%"; _note.Transparency = slider.Value; Save(); };
         panel.Children.Add(slider); panel.Children.Add(label); menu.Items.Add(new MenuItem { Header = panel, StaysOpenOnClick = true }); menu.IsOpen = true;
+    }
+    private void Reminder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ReminderDialog(_note.ReminderAt, _note.ReminderMinutesBefore) { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+        if (dialog.ClearRequested) { _note.ReminderAt = null; _note.ReminderNotified = false; }
+        else { _note.ReminderAt = dialog.ReminderAt; _note.ReminderMinutesBefore = dialog.MinutesBefore; _note.ReminderNotified = false; }
+        Save(); UpdateReminderCountdown();
     }
     private void DeleteNote()
     {
@@ -153,7 +161,19 @@ public partial class NoteWindow : Window
     }
     private void CheckReminder()
     {
-        if (_note.ReminderAt is not DateTime at || _note.ReminderNotified || DateTime.Now < at.AddMinutes(-_note.ReminderMinutesBefore)) return;
-        _note.ReminderNotified = true; Save(); Show(); Activate(); var original = Opacity; var count = 0; var flash = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) }; flash.Tick += (_, _) => { Opacity = Opacity < original ? original : Math.Max(.25, original - .35); if (++count >= 8) { flash.Stop(); Opacity = original; } }; flash.Start(); System.Windows.MessageBox.Show($"이벤트 알림: {at:HH:mm}", "Smart Sticker");
+        if (_alarmOpen || _note.ReminderAt is not DateTime at || _note.ReminderNotified || DateTime.Now < at.AddMinutes(-_note.ReminderMinutesBefore)) return;
+        _alarmOpen = true; _note.ReminderNotified = true; Save(); Show(); WindowState = WindowState.Normal; Activate();
+        var originalBrush = Root.BorderBrush; var originalThickness = Root.BorderThickness; var count = 0; var flash = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(220) };
+        flash.Tick += (_, _) => { Root.BorderBrush = count % 2 == 0 ? System.Windows.Media.Brushes.OrangeRed : originalBrush; Root.BorderThickness = count % 2 == 0 ? new Thickness(4) : originalThickness; if (++count >= 12) { flash.Stop(); Root.BorderBrush = originalBrush; Root.BorderThickness = originalThickness; } }; flash.Start();
+        var alarm = new ReminderAlarmDialog(string.IsNullOrWhiteSpace(_note.Text) ? "메모 알림" : _note.Text, at) { Owner = this }; alarm.ShowDialog();
+        if (alarm.SnoozeMinutes is int minutes) { _note.ReminderAt = DateTime.Now.AddMinutes(minutes); _note.ReminderMinutesBefore = 0; _note.ReminderNotified = false; }
+        else if (alarm.Dismissed) { _note.ReminderAt = null; _note.ReminderNotified = false; }
+        _alarmOpen = false; Save(); UpdateReminderCountdown();
+    }
+    private void UpdateReminderCountdown()
+    {
+        if (_note.ReminderAt is not DateTime at) { ReminderCountdown.Visibility = Visibility.Collapsed; return; }
+        var remaining = at - DateTime.Now; ReminderCountdown.Visibility = Visibility.Visible;
+        ReminderCountdown.Text = remaining.TotalSeconds <= 0 ? "알림 도달" : remaining.TotalDays >= 1 ? $"D-{Math.Ceiling(remaining.TotalDays):0}" : remaining.TotalHours >= 1 ? $"{(int)remaining.TotalHours}시간 {remaining.Minutes}분" : $"{Math.Max(0, remaining.Minutes)}분 {Math.Max(0, remaining.Seconds)}초";
     }
 }
