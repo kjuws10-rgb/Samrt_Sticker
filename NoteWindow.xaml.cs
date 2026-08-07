@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace SmartSticker;
 
@@ -21,11 +22,13 @@ public partial class NoteWindow : Window
     private System.Windows.Point _panStart;
     private double _panHorizontal;
     private double _panVertical;
+    private readonly DispatcherTimer _reminderTimer = new() { Interval = TimeSpan.FromSeconds(15) };
 
     public Guid NoteId => _note.Id;
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
     {
         InitializeComponent(); _store = store; _note = note; _settings = settings;
+        _reminderTimer.Tick += (_, _) => CheckReminder(); _reminderTimer.Start();
         var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
         SetColor(note.Color); Opacity = 1 - (note.Transparency / 100); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
@@ -54,7 +57,8 @@ public partial class NoteWindow : Window
         foreach (var shade in _colors) { var swatch = new MenuItem { Header = "     ", Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(shade)! }; swatch.Click += (_, _) => { SetColor(shade); Save(); }; color.Items.Add(swatch); }
         var font = new MenuItem { Header = "글꼴" };
         foreach (var name in new[] { "맑은 고딕", "Segoe UI", "Arial", "나눔고딕", "Consolas" }) { var item = new MenuItem { Header = name, FontFamily = new System.Windows.Media.FontFamily(name) }; item.Click += (_, _) => { _note.FontFamily = name; Editor.FontFamily = new System.Windows.Media.FontFamily(name); Save(); }; font.Items.Add(item); }
-        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(font); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
+        var reminder = new MenuItem { Header = "이벤트 알림: 1시간 후" }; reminder.Click += (_, _) => { _note.ReminderAt = DateTime.Now.AddHours(1); _note.ReminderMinutesBefore = 0; _note.ReminderNotified = false; Save(); };
+        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(font); menu.Items.Add(reminder); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
     private void Opacity_Click(object sender, RoutedEventArgs e)
@@ -146,5 +150,10 @@ public partial class NoteWindow : Window
         if (!_ready) return;
         var range = new TextRange(Editor.Document.ContentStart, Editor.Document.ContentEnd); using var stream = new MemoryStream(); range.Save(stream, System.Windows.DataFormats.Rtf);
         _note.RtfText = System.Text.Encoding.UTF8.GetString(stream.ToArray()); using var xamlStream = new MemoryStream(); range.Save(xamlStream, System.Windows.DataFormats.XamlPackage); _note.XamlDocument = Convert.ToBase64String(xamlStream.ToArray()); _note.Text = range.Text.TrimEnd('\r', '\n'); _note.IsPinned = Topmost; _note.Left = Left; _note.Top = Top; _note.Width = Width; _note.Height = Height; _note.NoteOpacity = Opacity; _note.UpdatedAt = DateTime.Now; _store.Save();
+    }
+    private void CheckReminder()
+    {
+        if (_note.ReminderAt is not DateTime at || _note.ReminderNotified || DateTime.Now < at.AddMinutes(-_note.ReminderMinutesBefore)) return;
+        _note.ReminderNotified = true; Save(); Show(); Activate(); var original = Opacity; var count = 0; var flash = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) }; flash.Tick += (_, _) => { Opacity = Opacity < original ? original : Math.Max(.25, original - .35); if (++count >= 8) { flash.Stop(); Opacity = original; } }; flash.Start(); System.Windows.MessageBox.Show($"이벤트 알림: {at:HH:mm}", "Smart Sticker");
     }
 }
