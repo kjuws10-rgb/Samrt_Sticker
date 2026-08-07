@@ -12,6 +12,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        DpiAwareness.EnablePerMonitorV2();
         _instance = new Mutex(true, "SmartSticker.SingleInstance", out var created);
         if (!created) { Shutdown(); return; }
         base.OnStartup(e);
