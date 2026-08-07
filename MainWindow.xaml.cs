@@ -76,7 +76,9 @@ public partial class MainWindow : Window
         if (NotesList.SelectedItem is not NoteListItem item) { UpdateSelectionAppearance(); return; }
         if (Mouse.RightButton == MouseButtonState.Pressed || Keyboard.Modifiers != ModifierKeys.None) { UpdateSelectionAppearance(); return; }
         var open = System.Windows.Application.Current.Windows.OfType<NoteWindow>().FirstOrDefault(window => window.NoteId == item.Note.Id);
-        if (open is null) new NoteWindow(_store, item.Note, _settings).Show(); else { open.Show(); open.Activate(); }
+        if (open is null) new NoteWindow(_store, item.Note, _settings).Show();
+        else if (open.IsVisible) open.Hide();
+        else { open.Show(); open.WindowState = WindowState.Normal; open.Activate(); }
         NotesList.SelectedItem = null;
         UpdateSelectionAppearance();
     }
