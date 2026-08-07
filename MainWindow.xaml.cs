@@ -31,7 +31,7 @@ public partial class MainWindow : Window
         NotesList.PreviewKeyDown += NotesList_PreviewKeyDown;
         NotesList.ItemContainerGenerator.StatusChanged += (_, _) => AttachHoverPreviews();
         ApplyTheme(_settings.Current.Theme);
-        using var icon = StickerIcon.Create(); Icon = Imaging.CreateBitmapSourceFromHIcon(icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+        Icon = StickerIcon.CreateImageSource();
         Closing += (_, e) => { if (!_allowClose) { e.Cancel = true; Hide(); } };
         var jumpList = new JumpList(); jumpList.JumpItems.Add(new JumpTask { Title = "새 메모", Description = "새 스티커 메모 만들기", ApplicationPath = Environment.ProcessPath, Arguments = "--new-note" }); jumpList.JumpItems.Add(new JumpTask { Title = "모든 메모 표시", Description = "저장된 메모 열기", ApplicationPath = Environment.ProcessPath, Arguments = "--show-all" }); JumpList.SetJumpList(System.Windows.Application.Current, jumpList);
     }

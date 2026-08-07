@@ -28,7 +28,7 @@ public partial class NoteWindow : Window
     public Guid NoteId => _note.Id;
     public NoteWindow(NoteStore store, NoteModel note, SettingsStore? settings = null)
     {
-        InitializeComponent(); _store = store; _note = note; _settings = settings;
+        InitializeComponent(); Icon = StickerIcon.CreateImageSource(); _store = store; _note = note; _settings = settings;
         _reminderTimer.Tick += (_, _) => { UpdateReminderCountdown(); CheckReminder(); }; _reminderTimer.Start(); UpdateReminderCountdown();
         var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
