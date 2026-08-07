@@ -28,7 +28,7 @@ public partial class NoteWindow : Window
         InitializeComponent(); _store = store; _note = note; _settings = settings;
         var inlineItem = new System.Windows.Controls.MenuItem { Header = "본문 커서 위치에 이미지 삽입" }; inlineItem.Click += (_, _) => InsertImageIntoText(); Preview.ContextMenu.Items.Insert(1, inlineItem);
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
-        SetColor(note.Color); Opacity = note.NoteOpacity; Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
+        SetColor(note.Color); Opacity = 1 - (note.Transparency / 100); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
         ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
         LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => Save();
     }
@@ -52,16 +52,18 @@ public partial class NoteWindow : Window
         var menu = new ContextMenu();
         var color = new MenuItem { Header = "색상 선택" };
         foreach (var shade in _colors) { var swatch = new MenuItem { Header = "     ", Background = (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(shade)! }; swatch.Click += (_, _) => { SetColor(shade); Save(); }; color.Items.Add(swatch); }
-        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
+        var font = new MenuItem { Header = "글꼴" };
+        foreach (var name in new[] { "맑은 고딕", "Segoe UI", "Arial", "나눔고딕", "Consolas" }) { var item = new MenuItem { Header = name, FontFamily = new System.Windows.Media.FontFamily(name) }; item.Click += (_, _) => { _note.FontFamily = name; Editor.FontFamily = new System.Windows.Media.FontFamily(name); Save(); }; font.Items.Add(item); }
+        var delete = new MenuItem { Header = "메모 영구 삭제" }; delete.Click += (_, _) => DeleteNote(); menu.Items.Add(color); menu.Items.Add(font); menu.Items.Add(new Separator()); menu.Items.Add(delete); menu.IsOpen = true;
     }
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
     private void Opacity_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu(); var panel = new StackPanel { Margin = new Thickness(10), Width = 160 };
         panel.Children.Add(new TextBlock { Text = "메모 투명도", FontWeight = FontWeights.SemiBold });
-        var label = new TextBlock { Text = $"{Opacity:P0}", Margin = new Thickness(0, 5, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
-        var slider = new Slider { Minimum = .3, Maximum = 1, Value = Opacity };
-        slider.ValueChanged += (_, _) => { Opacity = slider.Value; label.Text = $"{slider.Value:P0}"; _note.NoteOpacity = slider.Value; Save(); };
+        var label = new TextBlock { Text = $"{_note.Transparency:0}%", Margin = new Thickness(0, 5, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
+        var slider = new Slider { Minimum = 0, Maximum = 95, Value = _note.Transparency };
+        slider.ValueChanged += (_, _) => { Opacity = 1 - (slider.Value / 100); label.Text = $"{slider.Value:0}%"; _note.Transparency = slider.Value; Save(); };
         panel.Children.Add(slider); panel.Children.Add(label); menu.Items.Add(new MenuItem { Header = panel, StaysOpenOnClick = true }); menu.IsOpen = true;
     }
     private void DeleteNote()

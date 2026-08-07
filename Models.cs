@@ -21,4 +21,9 @@ public sealed class NoteModel
     public double ImageOffsetX { get; set; }
     public double ImageOffsetY { get; set; }
     public double NoteOpacity { get; set; } = 1;
+    public double Transparency { get; set; }
+    public double ImageDisplayScale { get; set; } = 1;
+    public DateTime? ReminderAt { get; set; }
+    public int ReminderMinutesBefore { get; set; }
+    public bool ReminderNotified { get; set; }
 }
