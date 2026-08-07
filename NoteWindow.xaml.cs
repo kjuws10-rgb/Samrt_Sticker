@@ -91,7 +91,7 @@ public partial class NoteWindow : Window
     }
     private void CopyImage_Click(object sender, RoutedEventArgs e)
     {
-        if (Preview.Source is BitmapSource image) System.Windows.Clipboard.SetImage(image);
+        if (Preview.Source is BitmapSource image) SafeClipboard.SetImage(image);
     }
     private void DeleteImage_Click(object sender, RoutedEventArgs e)
     {
@@ -109,9 +109,10 @@ public partial class NoteWindow : Window
     }
     private void Editor_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key != Key.V || Keyboard.Modifiers != ModifierKeys.Control || !System.Windows.Clipboard.ContainsImage()) return;
-        var image = System.Windows.Clipboard.GetImage();
-        if (image is null) return;
+        if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control && !Editor.Selection.IsEmpty) { SafeClipboard.SetText(Editor.Selection.Text); e.Handled = true; return; }
+        if (e.Key != Key.V || Keyboard.Modifiers != ModifierKeys.Control) return;
+        var image = SafeClipboard.GetImage();
+        if (image is null) { var text = SafeClipboard.GetText(); if (!string.IsNullOrEmpty(text)) { Editor.CaretPosition.InsertTextInRun(text); e.Handled = true; } return; }
         Directory.CreateDirectory(_store.ImageDirectory);
         var path = Path.Combine(_store.ImageDirectory, $"pasted-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
