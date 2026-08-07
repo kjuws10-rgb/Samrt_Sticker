@@ -4,6 +4,7 @@
   <Grid><Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="*"/><RowDefinition Height="44"/></Grid.RowDefinitions>
    <Grid Grid.Row="0" Background="#26FFFFFF" MouseLeftButtonDown="Header_MouseLeftButtonDown"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <Button Grid.Column="0" HorizontalAlignment="Left" Click="NewNote_Click" Content="＋" FontSize="25" FontWeight="Light" Padding="12,0" ToolTip="새 메모" Background="Transparent" BorderThickness="0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
+    <TextBlock x:Name="ReminderCountdown" Grid.Column="0" Margin="55,0,5,0" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="#FF6B6654" Visibility="Collapsed"/>
     <Button Grid.Column="1" Click="More_Click" Content="•••" FontSize="17" Padding="11,0" ToolTip="색상 변경 또는 메모 삭제" Background="Transparent" BorderThickness="0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
     <Button Grid.Column="2" Click="Close_Click" Content="×" FontSize="27" FontWeight="Light" Padding="11,0" ToolTip="메모 닫기" Background="Transparent" BorderThickness="0" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
    </Grid>
@@ -19,6 +20,7 @@
     <Button Click="Bullets_Click" Content="☷" FontSize="18" Padding="8,2" ToolTip="글머리 기호" Background="Transparent" BorderThickness="0"/>
     <Button Click="Capture_Click" Content="▧" FontSize="19" Padding="9,2" ToolTip="이 메모에 화면 캡처 첨부" Background="Transparent" BorderThickness="0"/>
     <Button Click="Opacity_Click" Content="◐" FontSize="17" Padding="8,2" ToolTip="메모 투명도" Background="Transparent" BorderThickness="0"/>
+    <Button Click="Reminder_Click" Content="⏰" FontSize="16" Padding="8,2" ToolTip="이벤트 알림 설정" Background="Transparent" BorderThickness="0"/>
    </StackPanel></Border>
   </Grid>
  </Border>
