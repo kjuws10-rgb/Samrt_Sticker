@@ -6,17 +6,28 @@ namespace SmartSticker;
 
 public sealed class HotkeyManager : IDisposable
 {
-    private const int Id = 45017;
     private const int WmHotkey = 0x0312;
+    private readonly int _id;
     private bool _registered;
     public event Action? Pressed;
-    public HotkeyManager() => ComponentDispatcher.ThreadPreprocessMessage += OnMessage;
+    public HotkeyManager(int id)
+    {
+        _id = id;
+        ComponentDispatcher.ThreadPreprocessMessage += OnMessage;
+    }
     public bool Register(string shortcut)
     {
         Unregister();
         if (!TryParse(shortcut, out var modifiers, out var key)) return false;
-        _registered = RegisterHotKey(IntPtr.Zero, Id, modifiers, (uint)KeyInterop.VirtualKeyFromKey(key));
+        _registered = RegisterHotKey(IntPtr.Zero, _id, modifiers, (uint)KeyInterop.VirtualKeyFromKey(key));
         return _registered;
+    }
+    public static bool AreEquivalent(string? first, string? second)
+    {
+        return TryParse(first, out var firstModifiers, out var firstKey)
+            && TryParse(second, out var secondModifiers, out var secondKey)
+            && firstModifiers == secondModifiers
+            && firstKey == secondKey;
     }
     public static bool TryParse(string? shortcut, out uint modifiers, out Key key)
     {
@@ -36,8 +47,9 @@ public sealed class HotkeyManager : IDisposable
         }
         return modifiers != 0 && Enum.TryParse(parts[^1], true, out key) && key != Key.None && KeyInterop.VirtualKeyFromKey(key) != 0;
     }
-    private void OnMessage(ref MSG msg, ref bool handled) { if (msg.message == WmHotkey && msg.wParam.ToInt32() == Id) { Pressed?.Invoke(); handled = true; } }
-    private void Unregister() { if (_registered) { UnregisterHotKey(IntPtr.Zero, Id); _registered = false; } }
+    private void OnMessage(ref MSG msg, ref bool handled) { if (msg.message == WmHotkey && msg.wParam.ToInt32() == _id) { Pressed?.Invoke(); handled = true; } }
+    private void Unregister() { if (_registered) { UnregisterHotKey(IntPtr.Zero, _id); _registered = false; } }
+    public void ClearRegistration() => Unregister();
     public void Dispose() { Unregister(); ComponentDispatcher.ThreadPreprocessMessage -= OnMessage; }
     [DllImport("user32.dll")] private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint virtualKey);
     [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr hWnd, int id);

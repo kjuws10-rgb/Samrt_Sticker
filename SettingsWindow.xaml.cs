@@ -9,14 +9,16 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent(); _store = store; var s = store.Current;
         AutoStart.IsChecked = s.StartWithWindows; RestoreNotes.IsChecked = s.RestoreNotesOnLaunch; DefaultPinned.IsChecked = s.DefaultPinned; CopyCapture.IsChecked = s.CopyCaptureToClipboard;
-        CaptureShortcut.Text = s.CaptureShortcut; DefaultFontFamilyBox.Text = s.DefaultFontFamily; DefaultFontSizeBox.Text = s.DefaultFontSize.ToString();
+        CaptureShortcut.Text = s.CaptureShortcut; ShowAllNotesShortcut.Text = s.ShowAllNotesShortcut; DefaultFontFamilyBox.Text = s.DefaultFontFamily; DefaultFontSizeBox.Text = s.DefaultFontSize.ToString();
         CaptureModeBox.SelectedIndex = (int)s.CaptureMode;
         ThemeBox.Text = s.Theme;
     }
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         if (!HotkeyManager.TryParse(CaptureShortcut.Text, out _, out _)) { System.Windows.MessageBox.Show("단축키 형식이 올바르지 않습니다. 예: Shift + F5", "Smart Sticker"); return; }
-        _store.Save(new AppSettings { StartWithWindows = AutoStart.IsChecked == true, RestoreNotesOnLaunch = RestoreNotes.IsChecked == true, DefaultPinned = DefaultPinned.IsChecked == true, CopyCaptureToClipboard = CopyCapture.IsChecked == true, CaptureShortcut = CaptureShortcut.Text.Trim(), DefaultFontFamily = DefaultFontFamilyBox.Text, DefaultFontSize = double.TryParse(DefaultFontSizeBox.Text, out var size) ? size : 16, CaptureMode = (CaptureMode)Math.Max(0, CaptureModeBox.SelectedIndex), Theme = ThemeBox.Text });
+        if (!HotkeyManager.TryParse(ShowAllNotesShortcut.Text, out _, out _)) { System.Windows.MessageBox.Show("모든 메모 펼치기 단축키 형식이 올바르지 않습니다. 예: Ctrl + Shift + F6", "Smart Sticker"); return; }
+        if (HotkeyManager.AreEquivalent(CaptureShortcut.Text, ShowAllNotesShortcut.Text)) { System.Windows.MessageBox.Show("화면 캡처와 모든 메모 펼치기에 서로 다른 단축키를 지정하세요.", "Smart Sticker"); return; }
+        _store.Save(new AppSettings { StartWithWindows = AutoStart.IsChecked == true, RestoreNotesOnLaunch = RestoreNotes.IsChecked == true, DefaultPinned = DefaultPinned.IsChecked == true, CopyCaptureToClipboard = CopyCapture.IsChecked == true, CaptureShortcut = CaptureShortcut.Text.Trim(), ShowAllNotesShortcut = ShowAllNotesShortcut.Text.Trim(), DefaultFontFamily = DefaultFontFamilyBox.Text, DefaultFontSize = double.TryParse(DefaultFontSizeBox.Text, out var size) ? size : 16, CaptureMode = (CaptureMode)Math.Max(0, CaptureModeBox.SelectedIndex), Theme = ThemeBox.Text });
         DialogResult = true;
     }
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
