@@ -13,6 +13,7 @@ public sealed class AppSettings
     public bool DefaultPinned { get; set; }
     public bool CopyCaptureToClipboard { get; set; } = true;
     public string CaptureShortcut { get; set; } = "Shift + F5";
+    public string ShowAllNotesShortcut { get; set; } = "Ctrl + Shift + F6";
     public string DefaultFontFamily { get; set; } = "맑은 고딕";
     public double DefaultFontSize { get; set; } = 16;
     public CaptureMode CaptureMode { get; set; } = CaptureMode.FullScreen;
