@@ -24,7 +24,7 @@ public partial class App : System.Windows.Application
         _store.Changed += dashboard.RefreshNotes;
         dashboard.Show();
         _captureHotkey = new HotkeyManager(45017); _captureHotkey.Pressed += dashboard.CaptureNewNote; _captureHotkey.Register(_settings.Current.CaptureShortcut);
-        _showAllNotesHotkey = new HotkeyManager(45018); _showAllNotesHotkey.Pressed += () => ShowAllNotes(dashboard); _showAllNotesHotkey.Register(_settings.Current.ShowAllNotesShortcut);
+        _showAllNotesHotkey = new HotkeyManager(45018); _showAllNotesHotkey.Pressed += () => ToggleAllNotes(dashboard); _showAllNotesHotkey.Register(_settings.Current.ShowAllNotesShortcut);
         _settings.SettingsSaved += settings =>
         {
             _captureHotkey.ClearRegistration();
@@ -52,6 +52,14 @@ public partial class App : System.Windows.Application
             if (existing is null) new NoteWindow(_store, note, _settings).Show(); else { existing.Show(); existing.Activate(); }
         }
         dashboard.ShowDashboard();
+    }
+    private void ToggleAllNotes(MainWindow dashboard)
+    {
+        var anyNoteVisible = Current.Windows.OfType<NoteWindow>().Any(window => window.IsVisible);
+        if (anyNoteVisible || (_store.Notes.Count == 0 && dashboard.IsVisible))
+            HideAllNotes(dashboard);
+        else
+            ShowAllNotes(dashboard);
     }
     private static void HideAllNotes(MainWindow dashboard)
     {
