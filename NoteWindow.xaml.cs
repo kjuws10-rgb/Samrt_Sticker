@@ -34,7 +34,7 @@ public partial class NoteWindow : Window
         Left = note.Left; Top = note.Top; Width = note.Width; Height = note.Height; Topmost = note.IsPinned;
         SetColor(note.Color); Opacity = 1 - (note.Transparency / 100); Editor.FontFamily = new System.Windows.Media.FontFamily(note.FontFamily); Editor.FontSize = note.FontSize; LoadDocument(); LoadImage();
         ImageScale.ScaleX = note.ImageScale; ImageScale.ScaleY = note.ImageScale; ImageTranslate.X = note.ImageOffsetX; ImageTranslate.Y = note.ImageOffsetY; _ready = true;
-        LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => Save(); Closing += (_, _) => { _reminderTimer.Stop(); Save(); };
+        LocationChanged += (_, _) => Save(); SizeChanged += (_, _) => { ConstrainImageArea(); Save(); }; Closing += (_, _) => { _reminderTimer.Stop(); Save(); };
     }
     private void LoadDocument()
     {
@@ -45,9 +45,47 @@ public partial class NoteWindow : Window
     }
     private void LoadImage()
     {
-        if (string.IsNullOrWhiteSpace(_note.ImagePath) || !File.Exists(_note.ImagePath)) return;
+        if (string.IsNullOrWhiteSpace(_note.ImagePath) || !File.Exists(_note.ImagePath)) { HideImageArea(); return; }
         var image = new BitmapImage(); image.BeginInit(); image.UriSource = new Uri(_note.ImagePath); image.CacheOption = BitmapCacheOption.OnLoad; image.EndInit();
-        Preview.Source = image; ImageCard.Visibility = Visibility.Visible;
+        Preview.Source = image;
+        var height = _note.ImageAreaHeight > 0 ? _note.ImageAreaHeight : CalculateImageAreaHeight(image);
+        SetImageAreaHeight(height);
+        _note.ImageAreaHeight = ImageRow.Height.Value;
+    }
+    private double CalculateImageAreaHeight(BitmapSource image)
+    {
+        var availableWidth = Math.Max(160, Width - 28);
+        var aspectHeight = image.PixelWidth > 0 ? availableWidth * image.PixelHeight / image.PixelWidth : 160;
+        return Math.Clamp(aspectHeight, 80, GetMaximumImageAreaHeight());
+    }
+    private double GetMaximumImageAreaHeight() => Math.Max(80, Height - 42 - 44 - 18 - 80 - 8);
+    private void SetImageAreaHeight(double height)
+    {
+        ImageCard.Visibility = Visibility.Visible;
+        ImageSplitter.Visibility = Visibility.Visible;
+        ImageSplitterRow.Height = new GridLength(8);
+        ImageRow.Height = new GridLength(Math.Clamp(height, 60, GetMaximumImageAreaHeight()));
+    }
+    private void HideImageArea()
+    {
+        ImageCard.Visibility = Visibility.Collapsed;
+        ImageSplitter.Visibility = Visibility.Collapsed;
+        ImageRow.Height = new GridLength(0);
+        ImageSplitterRow.Height = new GridLength(0);
+    }
+    private void ConstrainImageArea()
+    {
+        if (ImageCard.Visibility != Visibility.Visible || ImageRow.Height.Value <= 0) return;
+        var constrained = Math.Clamp(ImageRow.ActualHeight, 60, GetMaximumImageAreaHeight());
+        ImageRow.Height = new GridLength(constrained);
+        _note.ImageAreaHeight = constrained;
+    }
+    private void ImageSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+    {
+        if (!_ready) return;
+        _note.ImageAreaHeight = ImageRow.ActualHeight;
+        ImageRow.Height = new GridLength(_note.ImageAreaHeight);
+        Save();
     }
     private void NewNote_Click(object sender, RoutedEventArgs e) { var note = new NoteModel { Text = "새 메모", FontFamily = _settings?.Current.DefaultFontFamily ?? "맑은 고딕", FontSize = _settings?.Current.DefaultFontSize ?? 16 }; _store.Add(note); new NoteWindow(_store, note, _settings).Show(); }
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.OriginalSource is System.Windows.Controls.Button) return; try { DragMove(); } catch { } }
@@ -96,7 +134,7 @@ public partial class NoteWindow : Window
     private void DeleteImage_Click(object sender, RoutedEventArgs e)
     {
         if (System.Windows.MessageBox.Show("이 메모에서 첨부 이미지를 삭제할까요?", "Smart Sticker", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        _note.ImagePath = null; Preview.Source = null; ImageCard.Visibility = Visibility.Collapsed; Save();
+        _note.ImagePath = null; _note.ImageAreaHeight = 0; Preview.Source = null; HideImageArea(); Save();
     }
     private void InsertImageIntoText()
     {
@@ -105,7 +143,7 @@ public partial class NoteWindow : Window
         var source = new BitmapImage(); source.BeginInit(); source.UriSource = new Uri(_note.ImagePath); source.CacheOption = BitmapCacheOption.OnLoad; source.EndInit(); image.Source = source;
         var paragraph = Editor.CaretPosition.Paragraph ?? Editor.Document.Blocks.FirstBlock as Paragraph;
         paragraph?.Inlines.Add(new InlineUIContainer(image));
-        ImageCard.Visibility = Visibility.Collapsed; Save(); Editor.Focus();
+        HideImageArea(); Save(); Editor.Focus();
     }
     private void Editor_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
@@ -117,7 +155,7 @@ public partial class NoteWindow : Window
         var path = Path.Combine(_store.ImageDirectory, $"pasted-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
         using (var stream = File.Create(path)) encoder.Save(stream);
-        _note.ImagePath = path; LoadImage(); Save(); e.Handled = true;
+        _note.ImagePath = path; _note.ImageAreaHeight = 0; LoadImage(); Save(); e.Handled = true;
     }
     private void Preview_MouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -142,7 +180,7 @@ public partial class NoteWindow : Window
     {
         if (_isCapturing) return;
         _isCapturing = true;
-        try { Hide(); System.Threading.Thread.Sleep(180); _note.ImagePath = CaptureService.Capture(_store, _settings?.Current.CaptureMode ?? CaptureMode.FullScreen); Show(); Activate(); LoadImage(); Save(); }
+        try { Hide(); System.Threading.Thread.Sleep(180); _note.ImagePath = CaptureService.Capture(_store, _settings?.Current.CaptureMode ?? CaptureMode.FullScreen); _note.ImageAreaHeight = 0; Show(); Activate(); LoadImage(); Save(); }
         catch (OperationCanceledException) { Show(); }
         catch (Exception ex) { Show(); System.Windows.MessageBox.Show($"캡처에 실패했습니다.\n{ex.Message}", "Smart Sticker"); }
         finally { _isCapturing = false; }
